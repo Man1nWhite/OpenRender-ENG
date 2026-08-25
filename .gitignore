@@ -1,0 +1,19 @@
+﻿# Build artifacts (regenerables con build.py / build_installer.bat)
+dist/
+build/
+release/
+installer/installer-output/
+*.spec
+
+# Python
+__pycache__/
+*.pyc
+
+# Local runtime data
+logs/
+config.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

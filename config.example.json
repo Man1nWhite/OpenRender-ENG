@@ -1,0 +1,10 @@
+{
+  "workspaceFolder": "",
+  "workspaceHistory": [],
+  "mcpServers": {
+    "workspace": {
+      "command": "workspace_mcp.py",
+      "args": []
+    }
+  }
+}
