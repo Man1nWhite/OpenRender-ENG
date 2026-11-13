@@ -79,12 +79,12 @@ async def main():
 
     # 3. real tool call: write then read back through the server
     msg = await rpc({"type": "call_tool", "name": "write_file",
-                     "arguments": {"path": "hello.txt", "content": "hola desde el agente\n"},
+                     "arguments": {"path": "hello.txt", "content": "hello from the agent\n"},
                      "timeout": 30000}, timeout=60)
     ok1 = msg.get("ok") and "Created" in msg.get("text", "")
     msg = await rpc({"type": "call_tool", "name": "read_file",
                      "arguments": {"path": "hello.txt"}, "timeout": 30000})
-    ok2 = msg.get("ok") and "hola desde el agente" in msg.get("text", "")
+    ok2 = msg.get("ok") and "hello from the agent" in msg.get("text", "")
     results.append(("call_tool write+read roundtrip", ok1 and ok2))
     print("  read:", (msg.get("text") or "")[:80].replace("\n", " / "))
 
@@ -109,7 +109,7 @@ async def main():
 
     # 7. one-click switch to a second folder (the menu's core feature)
     ws_root2 = Path(tempfile.mkdtemp(prefix="zs_ws_second_"))
-    (ws_root2 / "second.txt").write_text("estamos en la segunda carpeta\n", encoding="utf-8")
+    (ws_root2 / "second.txt").write_text("we are in the second folder\n", encoding="utf-8")
     msg = await rpc({"type": "set_workspace", "path": str(ws_root2)}, timeout=40)
     results.append(("set_workspace switches", msg.get("ok") is True and msg.get("ws_current") == str(ws_root2)))
     results.append(("history remembers both folders",
@@ -120,7 +120,7 @@ async def main():
     msg = await rpc({"type": "call_tool", "name": "read_file",
                      "arguments": {"path": "second.txt"}, "timeout": 30000})
     results.append(("tool runs inside the NEW folder",
-                    msg.get("ok") is True and "segunda carpeta" in msg.get("text", "")))
+                    msg.get("ok") is True and "second folder" in msg.get("text", "")))
     # old root must now be OUTSIDE the sandbox
     msg = await rpc({"type": "call_tool", "name": "read_file",
                      "arguments": {"path": "hello.txt"}, "timeout": 30000})
