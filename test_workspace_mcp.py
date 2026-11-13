@@ -96,13 +96,13 @@ r = tool("write_file", {"path": "src/utils/helpers.js", "content": "export const
 check("write_file creates parents", "Created" in r["result"]["content"][0]["text"])
 
 # edit_file exact match
-r = tool("edit_file", {"path": "src/app.py", "old_string": "print('hello')", "new_string": "print('hola mundo')"})
+r = tool("edit_file", {"path": "src/app.py", "old_string": "print('hello')", "new_string": "print('hello world')"})
 check("edit_file replace", "Edited" in r["result"]["content"][0]["text"])
 r = tool("read_file", {"path": "src/app.py"})
-check("edit_file persisted", "hola mundo" in r["result"]["content"][0]["text"])
+check("edit_file persisted", "hello world" in r["result"]["content"][0]["text"])
 
 # edit_file missing -> error
-r = tool("edit_file", {"path": "src/app.py", "old_string": "no existe esto", "new_string": "x"})
+r = tool("edit_file", {"path": "src/app.py", "old_string": "this does not exist", "new_string": "x"})
 check("edit_file missing errors", "error" in r and "not found" in r["error"]["message"])
 
 # edit_file ambiguous
@@ -123,7 +123,7 @@ r = tool("search_files", {"pattern": "**/*.py"})
 check("search_files", "app.py" in r["result"]["content"][0]["text"])
 
 # grep_files text
-r = tool("grep_files", {"query": "hola"})
+r = tool("grep_files", {"query": "hello world"})
 check("grep_files text", "app.py:2:" in r["result"]["content"][0]["text"], "| " + r["result"]["content"][0]["text"].splitlines()[1][:60])
 
 # CRLF regression: edit a CRLF file with a multi-line old_string copied from

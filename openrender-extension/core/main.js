@@ -2358,10 +2358,10 @@
         wsSection =
           `<section class="zs-menu-sec">
             <div class="zs-sec-label"><span>Project folder</span></div>
-            <div class="zs-menu-note">La IA trabaja DENTRO de esta carpeta. Toca una para cambiar; "+ Añadir carpeta" abre el selector de Windows.</div>
+            <div class="zs-menu-note">The AI works INSIDE this folder. Click one to switch; "+ Add folder" opens the Windows folder picker.</div>
             <div id="zs-ws-list">${wsRows}</div>
             <div class="zs-mcp-sep"></div>
-            <div class="zs-set-row"><button id="zs-ws-add">+ Añadir carpeta</button><span id="zs-ws-status"></span></div>
+            <div class="zs-set-row"><button id="zs-ws-add">+ Add folder</button><span id="zs-ws-status"></span></div>
           </section>`;
       }
 
@@ -2413,16 +2413,16 @@
           // Ack-only: the native picker lives ON THE USER'S PC and may stay
           // open for minutes. The fresh folder arrives later via the normal
           // status broadcast, which rebuilds this menu on next open.
-          wsStatus.innerHTML = `<span class="zs-mcp-spin-row"><span class="zs-mcp-spin"></span>Elige la carpeta en la ventana de tu PC…</span>`;
+          wsStatus.innerHTML = `<span class="zs-mcp-spin-row"><span class="zs-mcp-spin"></span>Choose the folder in the window on your PC…</span>`;
           const r = await bg({ type: "pick_workspace" });
           if (!r || !r.ok) {
-            wsStatus.textContent = (r && r.error) || "No se pudo abrir el selector - ¿está el puente abierto?";
+            wsStatus.textContent = (r && r.error) || "Could not open the folder picker - is the bridge running?";
             setTimeout(() => { if (wsStatus.textContent.startsWith("No se pudo")) wsStatus.textContent = ""; }, 4000);
             wsAddBtn.disabled = false;
             wsBusy = false;
             return;
           }
-          wsStatus.textContent = "Listo - la ventana está abierta en tu PC. Se aplicará al elegir.";
+          wsStatus.textContent = "Done - the window is open on your PC. It will apply once you choose.";
           setTimeout(() => {
             if (wsStatus.textContent.startsWith("Listo")) wsStatus.textContent = "";
             wsAddBtn.disabled = false;
@@ -2436,7 +2436,7 @@
           if (wsAddBtn && wsAddBtn.disabled) return;
           const path = b.dataset.path;
           if (!path || (A.bridge.wsCurrent && path.toLowerCase() === String(A.bridge.wsCurrent).toLowerCase())) return;
-          if (wsStatus) wsStatus.innerHTML = `<span class="zs-mcp-spin-row"><span class="zs-mcp-spin"></span>Cambiando de carpeta…</span>`;
+          if (wsStatus) wsStatus.innerHTML = `<span class="zs-mcp-spin-row"><span class="zs-mcp-spin"></span>Switching folder…</span>`;
           menuEl.querySelectorAll(".zs-ws-row").forEach((x) => (x.style.pointerEvents = "none"));
           const r = await bg({ type: "set_workspace", path });
           if (r && r.ok) {
@@ -2444,7 +2444,7 @@
             if (Array.isArray(r.history)) A.bridge.wsHistory = r.history;
             toast(`Carpeta cambiada: ${baseName(r.current || path)}`);
           } else {
-            if (wsStatus) wsStatus.textContent = (r && r.error) || "Error al cambiar de carpeta";
+            if (wsStatus) wsStatus.textContent = (r && r.error) || "Error switching folder";
             setTimeout(() => { if (wsStatus) wsStatus.textContent = ""; }, 3500);
           }
           buildMenu();

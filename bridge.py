@@ -1149,7 +1149,7 @@ async def handler(ws):
                         try:
                             chosen = await asyncio.to_thread(
                                 _pick_folder_dialog,
-                                "OpenRender - elige la carpeta del proyecto")
+                                "OpenRender - choose the project folder")
                             if not chosen:
                                 log("workspace pick cancelled from the chat UI.", "yl")
                                 return
@@ -1316,44 +1316,44 @@ def _print_first_run_tutorial():
     ext_dir = os.path.join(HERE, "openrender-extension")
     print()
     print(f"{C['cy']}╔══════════════════════════════════════════════════════════════╗")
-    print(f"║   BIENVENIDO A OPENRENDER - CONFIGURACION INICIAL (3 PASOS)  ║")
+    print(f"║      WELCOME TO OPENRENDER - FIRST-TIME SETUP (3 STEPS)      ║")
     print(f"╚══════════════════════════════════════════════════════════════╝{C['reset']}")
     print()
-    print(f"{C['yl']}PASO 1/3{C['reset']} - Carga la extension en tu navegador (solo la primera vez):")
-    print(f"   1. Abre {C['cy']}chrome://extensions{C['reset']} (Chrome) o {C['cy']}edge://extensions{C['reset']} (Edge)")
-    print(f"   2. Activa {C['cy']}Modo de desarrollador{C['reset']} (interruptor arriba a la derecha)")
-    print(f"   3. Pulsa {C['cy']}Cargar descomprimida{C['reset']} y selecciona esta carpeta:")
+    print(f"{C['yl']}STEP 1/3{C['reset']} - Load the extension in your browser (first time only):")
+    print(f"   1. Open {C['cy']}chrome://extensions{C['reset']} (Chrome) or {C['cy']}edge://extensions{C['reset']} (Edge)")
+    print(f"   2. Turn on {C['cy']}Developer mode{C['reset']} (toggle in the top-right corner)")
+    print(f"   3. Click {C['cy']}Load unpacked{C['reset']} and select this folder:")
     print(f"        {ext_dir}")
     print()
     try:
-        ans = input("Abrir esa carpeta automaticamente? [S/n]: ").strip().lower()
+        ans = input("Open that folder automatically? [Y/n]: ").strip().lower()
     except (EOFError, KeyboardInterrupt):
         ans = "n"
-    if ans in ("", "s", "si", "sí", "y", "yes"):
+    if ans in ("", "y", "yes"):
         if _open_in_explorer(ext_dir if os.path.isdir(ext_dir) else HERE):
             log("opened the extension folder for you.", "gr")
         else:
             log(f"could not open it automatically - open this path manually: {ext_dir}", "yl")
     print()
-    print(f"{C['yl']}PASO 2/3{C['reset']} - Elegir tu CARPETA de proyecto:")
-    print("   Todo lo que la IA haga quedara DENTRO de esa carpeta.")
+    print(f"{C['yl']}STEP 2/3{C['reset']} - Choose your project FOLDER:")
+    print("   Everything the AI does stays INSIDE that folder.")
     print()
-    print(f"{C['yl']}PASO 3/3{C['reset']} - Ve a {C['cy']}chat.deepseek.com{C['reset']} (o Gemini/Kimi/GLM/Qwen/Arena),")
-    print("   abre un chat NUEVO y pulsa el boton 'Start agent' de la barra.")
+    print(f"{C['yl']}STEP 3/3{C['reset']} - Go to {C['cy']}chat.deepseek.com{C['reset']} (or Gemini/Kimi/GLM/Qwen/Arena),")
+    print("   open a NEW chat and click the 'Start agent' button in the bar.")
     print()
-    # ── Gate: nothing happens until the user confirms Paso 1 is done. ──
+    # ── Gate: nothing happens until the user confirms Step 1 is done. ──
     while True:
         try:
-            ans = input(f"{C['act']}  Listo? Escribe s y pulsa Enter para elegir tu carpeta >{C['reset']} ").strip().lower()
+            ans = input(f"{C['act']}  Ready? Type y and press Enter to choose your folder >{C['reset']} ").strip().lower()
         except (EOFError, KeyboardInterrupt):
             print()
             return
-        if ans.startswith("s") or ans in ("listo", "ok", "y", "yes"):
+        if ans.startswith("y") or ans in ("ready", "done", "ok"):
             return
-        print("   (escribe s y pulsa Enter - el Paso 1 debe estar hecho)")
+        print("   (type y and press Enter - Step 1 must be done first)")
 
 
-def _pick_folder_dialog(title="OpenRender - elige la carpeta del proyecto"):
+def _pick_folder_dialog(title="OpenRender - choose the project folder"):
     """Open a native folder-picker dialog. Returns the chosen path or None
     (cancelled / no GUI available). Best-effort: any failure falls back to the
     console prompt in _select_workspace()."""
@@ -1378,7 +1378,7 @@ def _apply_workspace(path):
     global WORKSPACE_ROOT
     path = os.path.abspath(str(path or "").strip().strip('"'))
     if not os.path.isdir(path):
-        raise ValueError(f"'{path}' no es una carpeta valida")
+        raise ValueError(f"'{path}' is not a valid folder")
     WORKSPACE_ROOT = path
     _remember_workspace(path)
     return WORKSPACE_ROOT

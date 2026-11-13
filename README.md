@@ -1,326 +1,320 @@
 # OpenRender
 
-> **Tu IA de chat favorita, con control total de una carpeta de tu PC.**
-> Convierte DeepSeek, Gemini, Kimi, GLM, Qwen, Arena o Meta AI en un agente real que lee, crea y edita archivos, busca en el código y ejecuta comandos de terminal — todo dentro de la carpeta que tú elijas.
+> **Your favorite chat AI, with full control of one folder on your PC.**
+> Turn DeepSeek, Gemini, Kimi, GLM, Qwen, Arena or Meta AI into a real agent that reads, creates and edits files, searches the code and runs terminal commands — all inside the folder you choose.
 
-**Versión:** 0.0.1 beta · **Plataforma:** Windows · **Licencia:** GPL-3.0
-
----
-
-## 🌐 English TL;DR
-
-OpenRender turns your normal AI chat (DeepSeek, Gemini, Kimi, GLM, Qwen, Arena, Meta AI — no API keys) into a coding agent with **full control of a local project folder**: it explores the code, reads/creates/edits files, greps content and runs terminal commands (installs, builds, tests, git), sandboxed to the folder you pick. A browser extension injects commands into the chat; a small local bridge (`OpenRender.exe`) executes them. Load `openrender-extension/` unpacked in Chrome/Edge, run the exe, pick a folder, press **Start agent**. Free, GPL-3.0.
+**Version:** 0.0.1 beta · **Platform:** Windows · **License:** GPL-3.0
 
 ---
 
-## 📖 Índice
+## 📖 Table of contents
 
-1. [Qué es y qué hace](#-qué-es-y-qué-hace)
-2. [Cómo funciona (arquitectura)](#-cómo-funciona-arquitectura)
-3. [Instalación para usuarios](#-instalación-para-usuarios)
-4. [Uso diario](#-uso-diario)
-5. [Los 12 comandos del agente](#-los-12-comandos-del-agente)
-6. [Seguridad: qué puede y qué no puede hacer](#-seguridad)
-7. [Estructura del proyecto](#-estructura-del-proyecto)
-8. [Compilar desde fuente](#-compilar-desde-fuente)
+1. [What it is and what it does](#-what-it-is-and-what-it-does)
+2. [How it works (architecture)](#-how-it-works-architecture)
+3. [Installation for users](#-installation-for-users)
+4. [Daily use](#-daily-use)
+5. [The agent's 12 commands](#-the-agents-12-commands)
+6. [Security: what it can and cannot do](#-security)
+7. [Project structure](#-project-structure)
+8. [Building from source](#-building-from-source)
 9. [Tests](#-tests)
-10. [Configuración avanzada](#-configuración-avanzada)
-11. [Solución de problemas](#-solución-de-problemas)
-12. [Roadmap y limitaciones](#-roadmap-y-limitaciones)
-13. [Créditos y licencia](#-créditos-y-licencia)
+10. [Advanced configuration](#-advanced-configuration)
+11. [Troubleshooting](#-troubleshooting)
+12. [Roadmap and limitations](#-roadmap-and-limitations)
+13. [Credits and license](#-credits-and-license)
 
 ---
 
-## 🤖 Qué es y qué hace
+## 🤖 What it is and what it does
 
-Los modelos de IA web (DeepSeek, Gemini…) son excelentes programando, pero **no pueden tocar tu disco**: solo escriben texto que tú tienes que copiar y pegar archivo por archivo.
+Web AI models (DeepSeek, Gemini…) are excellent at programming, but **they cannot touch your disk**: they only write text that you have to copy and paste file by file.
 
-**OpenRender cierra ese hueco.** Es un puente entre el chat y tu disco:
+**OpenRender closes that gap.** It is a bridge between the chat and your disk:
 
-- El modelo escribe **comandos JSON** dentro de su respuesta normal (`{"command": "edit_file", ...}`)
-- La **extensión de navegador** detecta esos comandos en la página del chat
-- El **puente local** (`OpenRender.exe`) los ejecuta contra tu carpeta
-- El resultado vuelve al chat como otro mensaje, y la IA continúa sola
+- The model writes **JSON commands** inside its normal reply (`{"command": "edit_file", ...}`)
+- The **browser extension** detects those commands in the chat page
+- The **local bridge** (`OpenRender.exe`) runs them against your folder
+- The result goes back to the chat as another message, and the AI carries on by itself
 
-El resultado: pides *"arregla el bug del login y corre los tests"* y la IA explora el proyecto, lee los archivos, aplica los cambios, ejecuta `npm test` y te reporta — sin que toques el teclado.
+The result: you ask *"fix the login bug and run the tests"* and the AI explores the project, reads the files, applies the changes, runs `npm test` and reports back — without you touching the keyboard.
 
-### Características
+### Features
 
 | | |
 |---|---|
-| 📁 Control total de UNA carpeta | Leer, crear, editar, borrar, mover — encerrado en ella |
-| 💻 Terminal integrada | Instalar dependencias, compilar, correr tests, usar git |
-| 🔎 Búsqueda real | Por nombre (glob) y por contenido (texto o regex) |
-| 🧠 Memoria persistente | Notas del proyecto en `PROJECT_MEMORY.md` entre sesiones |
-| 🗂️ Multi-proyecto | Historial de carpetas con cambio en 1 clic desde el chat |
-| 🔌 Sin API keys | Usa las webs de chat gratis que ya conoces |
-| 🔒 Sandboxed | Nada fuera de la carpeta elegida; borrados amplios piden confirmación |
-| ➕ MCP extensible | Añade otros servidores MCP (Blender, etc.) como addons |
+| 📁 Full control of ONE folder | Read, create, edit, delete, move — confined to it |
+| 💻 Built-in terminal | Install dependencies, build, run tests, use git |
+| 🔎 Real search | By name (glob) and by content (text or regex) |
+| 🧠 Persistent memory | Project notes in `PROJECT_MEMORY.md` across sessions |
+| 🗂️ Multi-project | Folder history with 1-click switching from the chat |
+| 🔌 No API keys | Uses the free chat websites you already know |
+| 🔒 Sandboxed | Nothing outside the chosen folder; broad deletions ask for confirmation |
+| ➕ Extensible via MCP | Add other MCP servers (Blender, etc.) as addons |
 
 ---
 
-## ⚙️ Cómo funciona (arquitectura)
+## ⚙️ How it works (architecture)
 
 ```
 ┌─────────────────────────┐
-│  Chat web (DeepSeek,    │   El modelo responde con texto +
-│  Gemini, Kimi, GLM,     │   comandos JSON dentro de bloques
-│  Qwen, Arena, Meta AI)  │   de código
+│  Web chat (DeepSeek,    │   The model replies with text +
+│  Gemini, Kimi, GLM,     │   JSON commands inside code
+│  Qwen, Arena, Meta AI)  │   blocks
 └───────────┬─────────────┘
-            │  la extensión lee la página (DOM)
+            │  the extension reads the page (DOM)
 ┌───────────▼─────────────┐
-│  Extensión Chrome/Edge  │   openrender-extension/
-│  - bucle agéntico       │   parser → executor → feedback
-│  - UI: barra, chips,    │
-│    menú de carpetas     │
+│  Chrome/Edge extension  │   openrender-extension/
+│  - agentic loop         │   parser → executor → feedback
+│  - UI: bar, chips,      │
+│    folder menu          │
 └───────────┬─────────────┘
             │  WebSocket ws://127.0.0.1:17613
 ┌───────────▼─────────────┐
-│  Puente local           │   bridge.py  →  dist/OpenRender.exe
-│  - lanza servidores MCP │   (PyInstaller: Python incluido)
-│  - enruta cada comando  │
-│  - selector de carpeta  │
+│  Local bridge           │   bridge.py  →  dist/OpenRender.exe
+│  - spawns MCP servers   │   (PyInstaller: Python bundled)
+│  - routes each command  │
+│  - folder picker        │
 └───────────┬─────────────┘
-            │  stdio (JSON-RPC, protocolo MCP)
+            │  stdio (JSON-RPC, MCP protocol)
 ┌───────────▼─────────────┐
-│  Servidor workspace     │   workspace_mcp.py
-│  (embebido en el exe)   │   12 herramientas sobre TU carpeta
+│  Workspace server       │   workspace_mcp.py
+│  (embedded in the exe)  │   12 tools over YOUR folder
 └───────────┬─────────────┘
             ▼
-   📂 Documentos/mi-proyecto/
+   📂 Documents/my-project/
 ```
 
-**Flujo de un comando:**
+**Flow of a command:**
 
-1. Tú pides algo en el chat.
-2. La IA responde con un bloque ```json``` tipo `{"command": "read_file", "params": {"path": "src/app.py"}}`.
-3. La extensión lo parsea (`core/parser.js`), lo valida contra el catálogo de herramientas y lo envía al puente por WebSocket (`background.js`).
-4. El puente lo enruta al servidor correcto y espera el resultado (con reintentos, watchdogs y auto-restart si el servidor murió).
-5. El resultado vuelve al chat como mensaje del usuario ("Output of 'read_file': …"), camuflado visualmente como una tarjeta.
-6. La IA lo lee y decide el siguiente paso. Y así hasta terminar.
+1. You ask for something in the chat.
+2. The AI replies with a ```json``` block such as `{"command": "read_file", "params": {"path": "src/app.py"}}`.
+3. The extension parses it (`core/parser.js`), validates it against the tool catalog and sends it to the bridge over WebSocket (`background.js`).
+4. The bridge routes it to the right server and waits for the result (with retries, watchdogs and auto-restart if the server died).
+5. The result goes back to the chat as a user message ("Output of 'read_file': …"), visually disguised as a card.
+6. The AI reads it and decides the next step. And so on until it is done.
 
-Todo es **local**: ni tu código ni tu carpeta salen de tu máquina (solo viajan al chat lo que la IA lee explícitamente, igual que si pegaras los archivos a mano).
+Everything is **local**: neither your code nor your folder leaves your machine (only what the AI explicitly reads travels to the chat, just as if you pasted the files by hand).
 
 ---
 
-## 🚀 Instalación para usuarios
+## 🚀 Installation for users
 
-> **Requisitos:** Windows 10/11 x64 + Chrome o Edge. No necesita Python ni nada más (todo va dentro del exe).
+> **Requirements:** Windows 10/11 x64 + Chrome or Edge. No Python or anything else needed (everything is inside the exe).
 
-### Opción A — Instalador (recomendado)
+### Option A — Installer (recommended)
 
-1. Descarga y ejecuta **`OpenRender-Setup-0.0.1-beta.exe`**
-2. Siguiente → Siguiente. Se instala en **`Documentos\OpenRender`**:
+1. Download and run **`OpenRender-Setup-0.0.1-beta.exe`**
+2. Next → Next. It installs into **`Documents\OpenRender`**:
    ```
-   Documentos\OpenRender\
-   ├── OpenRender.exe          ← el programa
-   ├── openrender-extension\   ← la extensión
-   └── LEEME.txt               ← guía rápida
+   Documents\OpenRender\
+   ├── OpenRender.exe          ← the program
+   ├── openrender-extension\   ← the extension
+   └── README.txt              ← quick guide
    ```
-   Con accesos directos en escritorio y menú inicio.
+   With shortcuts on the desktop and in the Start menu.
 
-### Opción B — Portable
+### Option B — Portable
 
-Descarga `OpenRender-0.0.1-beta-windows-x64.zip`, descomprímelo donde quieras. Mismo contenido.
+Download `OpenRender-0.0.1-beta-windows-x64.zip` and unzip it wherever you like. Same contents.
 
-> ℹ️ Windows mostrará un aviso azul ("Windows protegió tu PC") porque el exe no está firmado digitalmente: **Más información → Ejecutar de todas formas**.
+> ℹ️ Windows will show a blue warning ("Windows protected your PC") because the exe is not digitally signed: **More info → Run anyway**.
 
-### Primera ejecución (asistida)
+### First run (guided)
 
-Al abrir `OpenRender.exe` por primera vez aparece un **tutorial de 3 pasos**:
+When you open `OpenRender.exe` for the first time, a **3-step tutorial** appears:
 
-1. **Cargar la extensión** (única vez): `chrome://extensions` → *Modo de desarrollador* → *Cargar descomprimida* → selecciona la carpeta `openrender-extension`. El tutorial te ofrece abrir esa carpeta automáticamente.
-2. Escribe **`s` (Listo)** → se abre el selector para elegir **tu carpeta de proyecto**.
-3. Listo. Las siguientes veces entra directo con la carpeta guardada.
+1. **Load the extension** (one time only): `chrome://extensions` → *Developer mode* → *Load unpacked* → select the `openrender-extension` folder. The tutorial offers to open that folder for you automatically.
+2. Type **`y` (Ready)** → the picker opens so you can choose **your project folder**.
+3. Done. From then on it starts straight away with the saved folder.
 
 ---
 
-## 🖱️ Uso diario
+## 🖱️ Daily use
 
-| Paso | Acción |
+| Step | Action |
 |---|---|
-| 1 | Abre **OpenRender.exe** (minimiza la ventana negra — es el puente) |
-| 2 | Ve a [chat.deepseek.com](https://chat.deepseek.com) *(recomendado)*, Gemini, [kimi.com](https://www.kimi.com), [chat.z.ai](https://chat.z.ai), [chat.qwen.ai](https://chat.qwen.ai) o [arena.ai](https://arena.ai) |
-| 3 | Abre un chat **nuevo** → pulsa **▶ Start agent** en la barra verde sobre el cuadro de texto |
-| 4 | Pide lo que quieras. Cada operación aparece como una tarjeta en el chat |
+| 1 | Open **OpenRender.exe** (minimize the black window — it is the bridge) |
+| 2 | Go to [chat.deepseek.com](https://chat.deepseek.com) *(recommended)*, Gemini, [kimi.com](https://www.kimi.com), [chat.z.ai](https://chat.z.ai), [chat.qwen.ai](https://chat.qwen.ai) or [arena.ai](https://arena.ai) |
+| 3 | Open a **new** chat → click **▶ Start agent** in the green bar above the text box |
+| 4 | Ask for whatever you want. Each operation shows up as a card in the chat |
 
-Ejemplos de peticiones reales:
+Examples of real requests:
 
 ```
-"Explora el proyecto y explícame cómo está estructurado"
-"Añade validación al formulario de registro y prueba que funciona"
-"Este test falla: averigua por qué y arréglalo"
-"Crea un endpoint /api/users con tests"
-"Sube todos los cambios a un branch nuevo"
-"Cambia el nombre de la función procesar() a process_order() en todo el proyecto"
+"Explore the project and explain how it is structured"
+"Add validation to the sign-up form and check that it works"
+"This test fails: find out why and fix it"
+"Create a /api/users endpoint with tests"
+"Push all the changes to a new branch"
+"Rename the function process() to process_order() across the whole project"
 ```
 
-**Panel ⌄ de la barra:** cambiar de carpeta de trabajo (historial con 1 clic), **+ Añadir carpeta** (selector nativo), cambiar de IA, prompt personalizado, gestionar servidores MCP addon.
+**The bar's ⌄ panel:** switch working folder (1-click history), **+ Add folder** (native picker), switch AI, custom prompt, manage addon MCP servers.
 
-**Cambiar de proyecto:** también puedes tocar otra carpeta del historial en cualquier momento — la IA pasa a trabajar ahí al instante y la anterior queda fuera de su alcance.
+**Switching project:** you can also click another folder in the history at any time — the AI starts working there instantly and the previous one is out of its reach.
 
 ---
 
-## 🛠️ Los 12 comandos del agente
+## 🛠️ The agent's 12 commands
 
-La IA solo puede usar estos comandos (los descubre con `list_commands` al empezar):
+The AI can only use these commands (it discovers them with `list_commands` at startup):
 
-| Comando | Qué hace |
+| Command | What it does |
 |---|---|
-| `workspace_info` | Vista general: ruta raíz, conteo de archivos, entradas principales |
-| `tree` | Árbol de directorios recursivo (ignora `node_modules`, `.git`, etc.) |
-| `list_directory` | Listado de una carpeta con tamaños |
-| `read_file` | Lee un archivo con líneas numeradas (paginado con offset/limit) |
-| `write_file` | Crea un archivo o lo sobrescribe completo |
-| `edit_file` | Reemplazo exacto tipo diff: `old_string` → `new_string` (+ `replace_all`) |
-| `create_folder` | Crea carpetas (con padres) |
-| `delete_path` | Borra archivos/carpetas (destructivo, pide confirmación en scope amplio) |
-| `move_path` | Mover o renombrar |
-| `search_files` | Busca por nombre con globs (`**/*.py`, `src/**/*.js`…) |
-| `grep_files` | Busca DENTRO de archivos (texto o regex, filtrable por glob) |
-| `run_command` | Ejecuta comandos de terminal en la raíz (timeout configurable) |
+| `workspace_info` | Overview: root path, file count, top-level entries |
+| `tree` | Recursive directory tree (ignores `node_modules`, `.git`, etc.) |
+| `list_directory` | Listing of a folder with sizes |
+| `read_file` | Reads a file with numbered lines (paginated with offset/limit) |
+| `write_file` | Creates a file or overwrites it entirely |
+| `edit_file` | Exact diff-style replacement: `old_string` → `new_string` (+ `replace_all`) |
+| `create_folder` | Creates folders (with parents) |
+| `delete_path` | Deletes files/folders (destructive, asks for confirmation on broad scope) |
+| `move_path` | Move or rename |
+| `search_files` | Searches by name with globs (`**/*.py`, `src/**/*.js`…) |
+| `grep_files` | Searches INSIDE files (text or regex, filterable by glob) |
+| `run_command` | Runs terminal commands at the root (configurable timeout) |
 
-Además mantiene **memoria persistente** en `PROJECT_MEMORY.md`: arquitectura, convenciones, decisiones y preferencias del usuario, compartidas entre todas las sesiones.
-
----
-
-## 🔒 Seguridad
-
-- **Sandbox estricto:** toda ruta se resuelve dentro de la carpeta elegida. `../`, rutas absolutas externas y unit links fuera → rechazados. La raíz nunca se puede borrar ni mover.
-- **Borrados protegidos:** `delete_path` es permanente; el sistema prompt ordena a la IA confirmar contigo antes de cualquier borrado más allá de lo que pediste explícitamente.
-- **Solo localhost:** el puente escucha en `127.0.0.1:17613`; nada expuesto a la red.
-- **Tú eliges la carpeta:** la IA solo ve lo que esté dentro. Cambias de proyecto = cambia su mundo.
-- **Código abierto:** todo lo que ejecuta está en este repo, auditable línea por línea.
-
-Aun así: es una beta con control real de tu disco. **Usa git**, revisa lo que hace y no le des carpetas con secretos (.env, llaves) si no hace falta.
+It also keeps **persistent memory** in `PROJECT_MEMORY.md`: architecture, conventions, decisions and user preferences, shared across all sessions.
 
 ---
 
-## 📂 Estructura del proyecto
+## 🔒 Security
+
+- **Strict sandbox:** every path is resolved inside the chosen folder. `../`, external absolute paths and links pointing outside → rejected. The root can never be deleted or moved.
+- **Protected deletions:** `delete_path` is permanent; the system prompt instructs the AI to confirm with you before any deletion beyond what you explicitly asked for.
+- **Localhost only:** the bridge listens on `127.0.0.1:17613`; nothing is exposed to the network.
+- **You choose the folder:** the AI only sees what is inside it. Switching project = switching its world.
+- **Open source:** everything it runs is in this repo, auditable line by line.
+
+Even so: this is a beta with real control over your disk. **Use git**, review what it does and do not give it folders containing secrets (.env, keys) unless you need to.
+
+---
+
+## 📂 Project structure
 
 ```
 OpenRender/
-├── bridge.py                    # Puente WebSocket ↔ servidores MCP (stdio)
-│                                # - selector/tutorial de carpeta (1ª vez)
-│                                # - cambio de carpeta en caliente (desde el chat)
-│                                # - auto-restart de servidores, watchdogs
-│                                # - modo empaquetado: se relanza como worker
-├── workspace_mcp.py             # Servidor MCP principal: 12 herramientas de
-│                                # archivos+terminal sobre la carpeta elegida
-├── config.json                  # Estado local (carpeta activa, historial) - NO se sube
-├── config.example.json          # Plantilla de configuración
-├── start.bat / MacOS_Start.command  # Lanzadores para desarrollo (sin exe)
+├── bridge.py                    # WebSocket ↔ MCP servers (stdio) bridge
+│                                # - folder picker/tutorial (first run)
+│                                # - hot folder switching (from the chat)
+│                                # - server auto-restart, watchdogs
+│                                # - packaged mode: re-spawns itself as worker
+├── workspace_mcp.py             # Main MCP server: 12 file+terminal tools
+│                                # over the chosen folder
+├── config.json                  # Local state (active folder, history) - NOT committed
+├── config.example.json          # Configuration template
+├── start.bat / MacOS_Start.command  # Launchers for development (no exe)
 │
-├── openrender-extension/        # Extensión de navegador (Chrome/Edge, MV3)
+├── openrender-extension/        # Browser extension (Chrome/Edge, MV3)
 │   ├── manifest.json
-│   ├── background.js            # WebSocket al puente + caché de estado
+│   ├── background.js            # WebSocket to the bridge + state cache
 │   ├── core/
-│   │   ├── main.js              # Bucle agéntico + UI (barra, chips, menú)
-│   │   ├── parser.js            # Parser de comandos JSON (tolerante a Markdown)
-│   │   └── config.js            # System prompt + notas de herramientas
-│   ├── providers/               # Un adaptador DOM por sitio de chat:
+│   │   ├── main.js              # Agentic loop + UI (bar, chips, menu)
+│   │   ├── parser.js            # JSON command parser (Markdown-tolerant)
+│   │   └── config.js            # System prompt + tool notes
+│   ├── providers/               # One DOM adapter per chat site:
 │   │   ├── deepseek.js          #   deepseek.js, gemini.js, kimi.js, glm.js,
 │   │   ├── gemini.js            #   qwen.js(+qwen-net.js), arena.js, meta.js
-│   │   └── …                    #   (selectores, envío, detección de generación)
-│   ├── overlay.css              # Estilos de barra/chips/menú
-│   └── popup.html/js            # Popup del icono: estado del puente
+│   │   └── …                    #   (selectors, sending, generation detection)
+│   ├── overlay.css              # Bar/chips/menu styles
+│   └── popup.html/js            # Icon popup: bridge status
 │
-├── build.py                     # Empaqueta el exe (PyInstaller) + zip portable
-├── build_installer.bat          # Compila el instalador (Inno Setup)
+├── build.py                     # Packages the exe (PyInstaller) + portable zip
+├── build_installer.bat          # Compiles the installer (Inno Setup)
 ├── installer/OpenRender-installer.iss
 │
-├── test_workspace_mcp.py        # 30 pruebas del servidor de archivos
-├── test_bridge_e2e.py           # Puente completo por WebSocket (13 checks)
-├── test_exe_e2e.py              # El exe empaquetado, end-to-end
-└── test_installer.py            # Instalar→arrancar→desinstalar del setup
+├── test_workspace_mcp.py        # 30 tests of the file server
+├── test_bridge_e2e.py           # Full bridge over WebSocket (13 checks)
+├── test_exe_e2e.py              # The packaged exe, end-to-end
+└── test_installer.py            # Install→launch→uninstall of the setup
 ```
 
-**Detalles de diseño clave:**
+**Key design details:**
 
-- **Protocolo MCP estándar** (JSON-RPC sobre stdio): cualquier servidor MCP puede añadirse como addon desde el panel; el puente agrega sus herramientas y enruta por nombre.
-- **Un exe, dos roles:** en modo empaquetado, `bridge.py` se relanza a sí mismo con `--workspace-worker` para servir el workspace embebido.
-- **Provider pattern:** `core/main.js` nunca toca el DOM del chat; cada sitio tiene su adaptador. Añadir una nueva IA = un archivo nuevo en `providers/`.
-- **Anti-fragilidad del loop:** timeouts duros en cada llamada, reintentos ante caídas transitorias, deduplicación de comandos tras recargas, pausa automática cuando la pestaña pierde el foco.
+- **Standard MCP protocol** (JSON-RPC over stdio): any MCP server can be added as an addon from the panel; the bridge aggregates its tools and routes by name.
+- **One exe, two roles:** in packaged mode, `bridge.py` re-spawns itself with `--workspace-worker` to serve the embedded workspace.
+- **Provider pattern:** `core/main.js` never touches the chat's DOM; each site has its own adapter. Adding a new AI = one new file in `providers/`.
+- **Loop anti-fragility:** hard timeouts on every call, retries on transient failures, command deduplication after reloads, automatic pause when the tab loses focus.
 
 ---
 
-## 🔨 Compilar desde fuente
+## 🔨 Building from source
 
-Requisitos: Python 3.9+ y `pip install pyinstaller pillow`.
+Requirements: Python 3.9+ and `pip install pyinstaller pillow`.
 
 ```bat
 python build.py             rem → dist\OpenRender.exe + release\*.zip
-build_installer.bat         rem → installer-output\OpenRender-Setup-*.exe (requiere Inno Setup, gratis)
+build_installer.bat         rem → installer-output\OpenRender-Setup-*.exe (requires Inno Setup, free)
 ```
 
-Para probar en desarrollo sin empaquetar: `start.bat` (busca Python solo, instala `websockets` si falta).
+To try it in development without packaging: `start.bat` (finds Python by itself, installs `websockets` if missing).
 
 ---
 
 ## ✅ Tests
 
 ```bat
-python test_workspace_mcp.py   rem protocolo MCP: 30 pruebas (CRUD, grep, seguridad CRLF…)
-python test_bridge_e2e.py      rem arranque real del puente + cambio de carpeta en caliente
-python test_exe_e2e.py         rem lo mismo contra dist\OpenRender.exe
-python test_installer.py       rem instalación silenciosa → arranque → desinstalación
-node test-parser.js            rem (en openrender-extension\) parser de comandos
+python test_workspace_mcp.py   rem MCP protocol: 30 tests (CRUD, grep, CRLF safety…)
+python test_bridge_e2e.py      rem real bridge startup + hot folder switching
+python test_exe_e2e.py         rem the same against dist\OpenRender.exe
+python test_installer.py       rem silent install → launch → uninstall
+node test-parser.js            rem (in openrender-extension\) command parser
 ```
 
 ---
 
-## ⚙️ Configuración avanzada
+## ⚙️ Advanced configuration
 
-**`config.json`** (junto al exe; ver `config.example.json`):
+**`config.json`** (next to the exe; see `config.example.json`):
 
 ```json
 {
-  "workspaceFolder": "D:\\proyectos\\mi-app",   // carpeta activa ("" = preguntar)
-  "workspaceHistory": ["D:\\proyectos\\mi-app"], // historial del menú (máx 8)
+  "workspaceFolder": "D:\\projects\\my-app",   // active folder ("" = ask)
+  "workspaceHistory": ["D:\\projects\\my-app"], // menu history (max 8)
   "mcpServers": {
     "workspace": { "command": "workspace_mcp.py", "args": [] },
-    "blender":   { "command": "npx", "args": ["-y", "@alguna/mcp-blender"] }
+    "blender":   { "command": "npx", "args": ["-y", "@some/mcp-blender"] }
   }
 }
 ```
 
-| Variable de entorno | Efecto |
+| Environment variable | Effect |
 |---|---|
-| `ZS_WORKSPACE_ROOT` | Fuerza la carpeta de trabajo (se salta el selector) |
-| `ZS_BRIDGE_PORT`    | Cambia el puerto del puente (defecto `17613`) |
+| `ZS_WORKSPACE_ROOT` | Forces the working folder (skips the picker) |
+| `ZS_BRIDGE_PORT`    | Changes the bridge port (default `17613`) |
 
-**Añadir otro servidor MCP** (Blender, Sketchfab…): panel ⌄ → *MCP servers* → nombre + comando de inicio. Se reinicia el puente y sus herramientas aparecen junto a las del workspace.
+**Adding another MCP server** (Blender, Sketchfab…): ⌄ panel → *MCP servers* → name + start command. The bridge restarts and its tools appear alongside the workspace ones.
 
 ---
 
-## 🩺 Solución de problemas
+## 🩺 Troubleshooting
 
-| Síntoma | Solución |
+| Symptom | Solution |
 |---|---|
-| Barra gris "Bridge offline" | La ventana negra está cerrada → abre `OpenRender.exe` |
-| Punto amarillo | El puente vive pero aún no hay carpeta → revisa la ventana negra |
-| La IA responde en texto, sin comandos | Recuérdale que use los comandos, o abre chat nuevo y Start agent |
-| "No response from server" puntual | Reintenta; el puente reintenta solo ante caídas breves |
-| Quiero otra carpeta | Panel ⌄ → Project folder → toca otra o "+ Añadir carpeta" |
-| Puerto ocupado | Cierra otro OpenRender abierto, o `set ZS_BRIDGE_PORT=17614` antes de abrir |
+| Gray "Bridge offline" bar | The black window is closed → open `OpenRender.exe` |
+| Yellow dot | The bridge is alive but there is no folder yet → check the black window |
+| The AI replies in plain text, without commands | Remind it to use the commands, or open a new chat and Start agent |
+| Occasional "No response from server" | Retry; the bridge retries by itself on brief failures |
+| I want a different folder | ⌄ panel → Project folder → click another one or "+ Add folder" |
+| Port in use | Close any other open OpenRender, or `set ZS_BRIDGE_PORT=17614` before opening |
 
-Logs detallados: ventana del puente y `logs\bridge_debug.log` (junto al exe).
-
----
-
-## 🗺️ Roadmap y limitaciones
-
-**Beta actual (0.0.1):** Windows only · la extensión debe cargarse a mano (Chrome/Edge no permiten instalar extensiones desde programas externos) · Gemini/Kimi pueden ser inestables en sesiones largas (en Arena usa modo **Direct**) · `run_command` bloquea hasta 10 min máximo.
-
-**Ideas en cola:** firma digital del instalador · publicación en Chrome Web Store · versión macOS/Linux del exe · streaming del output de comandos largos · selección múltiple de carpetas simultáneas.
+Detailed logs: the bridge window and `logs\bridge_debug.log` (next to the exe).
 
 ---
 
-## 💬 Créditos y licencia
+## 🗺️ Roadmap and limitations
 
-OpenRender es un fork fuertemente retrabajado de [ZeroScript Free](https://github.com/sebattfg/ZeroScript-Free) (de agente de Roblox Studio a agente de carpetas locales), que a su vez toma ideas de conexión MCP-addon de [javnpa](https://github.com/javnpa). Gracias a ambos. 🙏
+**Current beta (0.0.1):** Windows only · the extension must be loaded by hand (Chrome/Edge do not allow installing extensions from external programs) · Gemini/Kimi can be unstable in long sessions (on Arena use **Direct** mode) · `run_command` blocks for up to 10 min maximum.
 
-Licencia **GPL-3.0** — ver [LICENSE](LICENSE). Úsalo, modifícalo y compártelo libremente.
+**Ideas in the queue:** digitally signed installer · publishing on the Chrome Web Store · macOS/Linux version of the exe · streaming the output of long commands · selecting multiple folders at once.
 
 ---
-*Hecho con ❤️ para dejar de copiar y pegar código a mano.*
+
+## 💬 Credits and license
+
+OpenRender is a heavily reworked fork of [ZeroScript Free](https://github.com/sebattfg/ZeroScript-Free) (from a Roblox Studio agent to a local-folder agent), which in turn borrows MCP-addon connection ideas from [javnpa](https://github.com/javnpa). Thanks to both. 🙏
+
+**GPL-3.0** license — see [LICENSE](LICENSE). Use it, modify it and share it freely.
+
+---
+*Made with ❤️ to stop copying and pasting code by hand.*

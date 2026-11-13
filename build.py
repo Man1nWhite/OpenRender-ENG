@@ -2,7 +2,7 @@
 #  - Converts assets/icon.png into build/icon.ico (PyInstaller needs .ico)
 #  - Runs PyInstaller -> dist/OpenRender.exe (onefile, console app)
 #  - Assembles release/OpenRender-<version>-win64.zip:
-#      OpenRender.exe + openrender-extension/ + LEEME.txt + clean config.json
+#      OpenRender.exe + openrender-extension/ + README.txt + clean config.json
 # Usage:  python build.py            (build exe + zip)
 #         python build.py --exe-only (skip the zip)
 import io
@@ -77,48 +77,48 @@ def write_clean_config(stage: Path):
     (stage / "config.json").write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
 
 
-LEEME = f"""\
+README = f"""\
 ==========================================================
-  {APP_NAME} {VERSION}  -  Guia rapida (Windows)
+  {APP_NAME} {VERSION}  -  Quick guide (Windows)
 ==========================================================
 
-QUE ES
-  Un agente de IA con control total de una carpeta de tu PC:
-  lee, crea y edita archivos, busca contenido y ejecuta
-  comandos de terminal (instalar, compilar, tests, git...)
-  desde un chat normal de DeepSeek, Gemini, Kimi, GLM,
-  Qwen, Arena o Meta AI.
+WHAT IT IS
+  An AI agent with full control of one folder on your PC:
+  it reads, creates and edits files, searches content and
+  runs terminal commands (install, build, tests, git...)
+  from a normal DeepSeek, Gemini, Kimi, GLM, Qwen, Arena
+  or Meta AI chat.
 
-PASOS
-  1) Doble clic a OpenRender.exe y elige la CARPETA de tu
-     proyecto en la ventana que se abre. Minimiza la ventana
-     negra (NO la cierres).
-  2) Carga la extension en el navegador (solo la primera vez):
-       - Abre chrome://extensions o edge://extensions
-       - Activa "Modo de desarrollador" (arriba a la derecha)
-       - "Cargar descomprimida" -> selecciona la carpeta
-         "openrender-extension" que esta junto a este exe
-         (con el instalador: Documentos\\OpenRender\\
+STEPS
+  1) Double-click OpenRender.exe and choose your project
+     FOLDER in the window that opens. Minimize the black
+     window (do NOT close it).
+  2) Load the extension in your browser (first time only):
+       - Open chrome://extensions or edge://extensions
+       - Turn on "Developer mode" (top-right corner)
+       - "Load unpacked" -> select the
+         "openrender-extension" folder next to this exe
+         (with the installer: Documents\\OpenRender\\
           openrender-extension)
-  3) Ve a https://chat.deepseek.com (recomendado), Gemini,
-     Kimi, chat.z.ai, chat.qwen.ai o arena.ai y abre un chat
-     NUEVO.
-  4) Pulsa "Start agent" en la barra de OpenRender y pide lo
-     que quieras.
+  3) Go to https://chat.deepseek.com (recommended), Gemini,
+     Kimi, chat.z.ai, chat.qwen.ai or arena.ai and open a
+     NEW chat.
+  4) Click "Start agent" in the OpenRender bar and ask for
+     whatever you want.
 
-CAMBIAR DE CARPETA
-  Cierra el puente, abre config.json (esta junto al exe) y
-  borra la ruta guardada en "workspaceFolder", o escribe otra.
+CHANGING FOLDER
+  Close the bridge, open config.json (next to the exe) and
+  clear the path saved in "workspaceFolder", or type another.
 
-REQUISITOS
-  - Windows 10/11 x64 (no necesita Python: todo va dentro)
-  - Navegador Chrome o Edge
+REQUIREMENTS
+  - Windows 10/11 x64 (no Python needed: it is all bundled)
+  - Chrome or Edge browser
 
-NOTAS
-  - Todo queda encerrado en tu carpeta: no puede tocar nada
-    fuera de ella.
-  - La IA guarda notas del proyecto en PROJECT_MEMORY.md
-    dentro de tu carpeta.
+NOTES
+  - Everything is confined to your folder: it cannot touch
+    anything outside it.
+  - The AI keeps project notes in PROJECT_MEMORY.md inside
+    your folder.
 """
 
 
@@ -130,7 +130,7 @@ def assemble_release(exe):
     stage.mkdir(parents=True)
     shutil.copy2(exe, stage / exe.name)
     write_clean_config(stage)
-    (stage / "LEEME.txt").write_text(LEEME, encoding="utf-8", newline="\r\n")
+    (stage / "README.txt").write_text(README, encoding="utf-8", newline="\r\n")
     ext_dst = stage / EXT_SRC.name
     shutil.copytree(EXT_SRC, ext_dst,
                     ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))

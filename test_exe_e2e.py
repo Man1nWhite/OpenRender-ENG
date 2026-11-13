@@ -100,12 +100,12 @@ async def main():
     results.append(("12 tools advertised", len(names) == 12))
 
     m = await rpc({"type": "call_tool", "name": "run_command",
-                   "arguments": {"command": "echo hola-exe", "timeout_seconds": 15},
+                   "arguments": {"command": "echo hello-exe", "timeout_seconds": 15},
                    "timeout": 45000})
-    results.append(("run_command via exe", m.get("ok") is True and "hola-exe" in m.get("text", "")))
+    results.append(("run_command via exe", m.get("ok") is True and "hello-exe" in m.get("text", "")))
 
     m = await rpc({"type": "call_tool", "name": "write_file",
-                   "arguments": {"path": "from_exe.txt", "content": "escrito por el exe"},
+                   "arguments": {"path": "from_exe.txt", "content": "written by the exe"},
                    "timeout": 30})
     results.append(("write_file via exe",
                     m.get("ok") is True and (ws_root / "from_exe.txt").is_file()))

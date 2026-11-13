@@ -36,7 +36,6 @@ CloseApplications=yes
 RestartApplications=no
 
 [Languages]
-Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
@@ -45,16 +44,16 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "..\dist\OpenRender.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\release\OpenRender\config.json"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
-Source: "..\release\OpenRender\LEEME.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\release\OpenRender\README.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\openrender-extension\*"; DestDir: "{app}\openrender-extension"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Comment: "OpenRender - agente de IA para tu carpeta de proyecto"
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Comment: "OpenRender - AI agent for your project folder"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "Iniciar OpenRender ahora"; Flags: nowait postinstall skipifsilent
-Filename: "{app}\openrender-extension"; Description: "Abrir la carpeta de la extension (para cargarla en Chrome/Edge)"; Flags: postinstall shellexec skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "Launch OpenRender now"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\openrender-extension"; Description: "Open the extension folder (to load it in Chrome/Edge)"; Flags: postinstall shellexec skipifsilent
 
 [UninstallDelete]
 ; logs are disposable, but keep config.json (uninsneveruninstall above)
